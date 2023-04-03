@@ -17,7 +17,7 @@ void list_rec(const char *path, bool permission, int size){
     DIR *dir = NULL;
     struct dirent *entry = NULL;
     dir = opendir(path);
-    char fullPath[512];
+    char fullPath[1024];
     struct stat statBuf;
 
 
@@ -28,26 +28,18 @@ void list_rec(const char *path, bool permission, int size){
 
    while((entry = readdir(dir)) != NULL) {
     if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name , "..") !=0 && entry->d_name[0]!='.' && !invalid(entry->d_name)){
-         snprintf(fullPath, 512, "%s/%s", path, entry->d_name);
+         snprintf(fullPath, 1024, "%s/%s", path, entry->d_name);
 
         if(lstat(fullPath, &statBuf) == 0) {
+            bool check_size = (size<0) || (S_ISREG(statBuf.st_mode) && statBuf.st_size > size);
           bool check_permission =  (permission == 0) || (statBuf.st_mode & S_IXUSR);
-         if(check_permission){
+         if(check_permission && check_size){
             if(S_ISDIR(statBuf.st_mode)){
                  printf("%s\n", fullPath);
                 list_rec(fullPath, permission, size);
             }else{
-                if(size != -1)
-                {
-                    if(statBuf.st_size > size){
-                         printf("%s\n", fullPath);
-                         list_rec(fullPath, permission, size);
-                    }
-                }
-                    else{
                         printf("%s\n", fullPath);
                          list_rec(fullPath, permission, size);
-                    }
                 }
         }
         else if(S_ISDIR(statBuf.st_mode)){
@@ -66,7 +58,7 @@ int list(const char *path, bool permission, int size)
     DIR *dir = NULL;
     struct dirent *entry = NULL;
     dir = opendir(path);
-    char fullPath[512];
+    char fullPath[1024];
     struct stat statBuf;
 
 
@@ -76,32 +68,24 @@ int list(const char *path, bool permission, int size)
            }
 
    while((entry = readdir(dir)) != NULL) {
-    snprintf(fullPath, 512, "%s/%s", path, entry->d_name);
+    snprintf(fullPath, 1024, "%s/%s", path, entry->d_name);
     if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name , "..") != 0 && entry->d_name[0]!='.' && !invalid(entry->d_name)){
          //snprintf(fullPath, 512, "%s/%s", path, entry->d_name);
 
         if(lstat(fullPath, &statBuf) == 0) {
-         //  bool check_size = (size<0) || (S_ISREG(statBuf.st_mode) && statBuf.st_size > size);
+           bool check_size = (size<0) || (S_ISREG(statBuf.st_mode) && statBuf.st_size > size);
             bool check_permission =  (permission == 0) || (statBuf.st_mode & 0100);
 
-        if(check_permission){
+        if(check_permission && check_size){
             if(S_ISDIR(statBuf.st_mode)){
-                 printf("%s/%s\n", path, entry->d_name);
+                        printf("%s/%s\n", path, entry->d_name);
 
             }else{
-                if(size != -1)
-                {
-                    if(statBuf.st_size > size){
-                         printf("%s/%s\n", path, entry->d_name);
-                    }
-                }
-                    else{
                         printf("%s/%s\n", path, entry->d_name);
-                    }
-                }
         }
      }
         }
+   }
    }
 
     closedir(dir);
@@ -109,45 +93,82 @@ int list(const char *path, bool permission, int size)
    
  }
 
-//  void parse(int fd){
-//     char magic[3] = {0};
-//     char header_size[3] = {0};
-//     char version;
-//     int nr_of_sections;
+ int parse(int fd){
+    char magic[3] = {0};
+    char header_size[3] = {0};
+    char version[5] = {0};
+    char nr_of_sections;
+    char sect_name[19]={0};
+    char sect_type[3]={0};
+    char sect_offset[5]={0};
+    int sect_size;
 
 
-//     lseek(fd, -4, SEEK_END);
-//     int read_header =read(fd, header_size, 2);
-//     if(read_header < 2){
-//         printf("SUCCESS\n");
-//         close(fd);
-//         return -1;
-//     }
-//     header_size[2] = '\0';
-//     int read_magic = read(fd, magic ,2);
-//     if(strcmp(magic, "BM") != 0){
-//         printf("ERROR\nwrong magic");
-//         close(fd);
-//         return -1;
-//     }
-//     else if(read_magic < 2){
-//         printf("SUCCESS\n");
-//         close(fd);
-//         return -1;
-//     }
-//     magic[2] = '\0';
-//     lseek(fd, -read_header, SEEK_CUR);
-//     int read_version = read(fd, &version, 4);
-//     if(read_version == 4){
-//         if(version < 113 || version > 201){
-//             printf("ERROR\nwrong version");
-//             close(fd);
-//             return -1;
-//          }
-//     }
-   
+    lseek(fd, -4, SEEK_END);
+    int read_header =read(fd, header_size, 2);
+    if(read_header < 2){
+        printf("SUCCESS\n");
+        close(fd);
+        return -1;
+    }
+    header_size[2] = '\0';
+    int read_magic = read(fd, magic ,2);
+    if(strcmp(magic, "BM") != 0){
+        printf("ERROR\nwrong magic\n");
+        close(fd);
+        return -1;
+    }
+    else if(read_magic < 2){
+        printf("SUCCESS\n");
+        close(fd);
+        return -1;
+    }
+    magic[2] = '\0';
+    lseek(fd, -read_header, SEEK_CUR);
+    int read_version = read(fd, &version, 4);
+    if(read_version == 4){
+        if(atoi(version)< 113 || atoi(version) > 201){
+            printf("ERROR\nwrong version\n");
+            close(fd);
+            return -1;
+         }
+    }
+   version[4] = '\0';
+
+    int read_nr_sections = read(fd, &nr_of_sections, 1);
+   if(read_nr_sections == 1){
+    if (nr_of_sections < 7 || nr_of_sections > 16){
+        printf("ERROR\nwrong sect_nr\n");
+        close(fd);
+        return -1;
+    }
+    if(read_nr_sections < 1){
+        printf("SUCCESS\n");
+        close(fd);
+        return -1;
+    }
+
+    for(char i = 0; i < nr_of_sections; i++){
+        read(fd, sect_name, 18);
+        sect_name[19] = '\0';
+        read(fd, sect_type, 2);
+        if(atoi(sect_type) != 76 && atoi(sect_type) != 28 && atoi(sect_type) != 29 && atoi(sect_type) != 87 && atoi(sect_type) != 38){
+            printf("ERROR\nwrong sect_types\n");
+        }
+
+        sect_type[3] = '\0';
+        read(fd, sect_offset, 4);
+        sect_offset[5] = '\0';
+
+        read(fd, &sect_size, 4);
+    }
+   }
+
+
+   close(fd);
+   return 0;
     
-//  }
+ }
  
 
 
@@ -189,23 +210,23 @@ int main(int argc, char **argv){
 
         }
 
-        // else if(strcmp(argv[1], "parse") == 0){
-        //     char* filepath = NULL;
-        //     if(strncmp(argv[2], "path=", 5) == 0)
-        //    filepath = argv[2] + 5;
-        //    else{
-        //     printf("ERROR\nfile_path not specified");
-        //    }
+        else if(strcmp(argv[1], "parse") == 0){
+            char* filepath = NULL;
+            if(strncmp(argv[2], "path=", 5) == 0)
+           filepath = argv[2] + 5;
+           else{
+            printf("ERROR\nfile_path not specified");
+           }
            
-        //    int fd = -1;
-        //    fd = open(filepath, O_RDONLY);
-        //   if(fd == -1) {
-        //      printf("ERROR\ninvalid file_path");
-        //      return 1;
-        //     }
+           int fd = -1;
+           fd = open(filepath, O_RDONLY);
+          if(fd == -1) {
+             printf("ERROR\ninvalid file_path");
+             return 1;
+            }
 
-        //     parse(fd);
-        // }
+            parse(fd);
+        }
 
     }
     return 0;
