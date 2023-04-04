@@ -87,7 +87,6 @@ int list(const char *path, bool permission, int size)
         }
    }
    }
-
     closedir(dir);
     return 0;
    
