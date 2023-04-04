@@ -94,76 +94,88 @@ int list(const char *path, bool permission, int size)
  }
 
  int parse(int fd){
-    char magic[3] = {0};
-    char header_size[3] = {0};
-    char version[5] = {0};
+    char magic[3];
+    int header_size = 0;
+    int version;
     char nr_of_sections;
-    char sect_name[19]={0};
-    char sect_type[3]={0};
-    char sect_offset[5]={0};
+    char sect_name[19];
+    int sect_type;
+    int sect_offset;
     int sect_size;
 
 
+
     lseek(fd, -4, SEEK_END);
-    int read_header =read(fd, header_size, 2);
-    if(read_header < 2){
-        printf("SUCCESS\n");
-        close(fd);
-        return -1;
-    }
-    header_size[2] = '\0';
-    int read_magic = read(fd, magic ,2);
+   read(fd, &header_size, 2);
+    read(fd, magic ,2);
+    
     if(strcmp(magic, "BM") != 0){
         printf("ERROR\nwrong magic\n");
         close(fd);
         return -1;
     }
-    else if(read_magic < 2){
-        printf("SUCCESS\n");
-        close(fd);
-        return -1;
-    }
+    
+
     magic[2] = '\0';
-    lseek(fd, -read_header, SEEK_CUR);
+    lseek(fd, -header_size, SEEK_END);
+
     int read_version = read(fd, &version, 4);
+    //printf("  versss %d", version);
+
     if(read_version == 4){
-        if(atoi(version)< 113 || atoi(version) > 201){
+        if(version< 113 || version > 201){
             printf("ERROR\nwrong version\n");
             close(fd);
             return -1;
          }
-    }
-   version[4] = '\0';
+   }
 
     int read_nr_sections = read(fd, &nr_of_sections, 1);
-   if(read_nr_sections == 1){
+   // printf("nr of sectionss %d\n", (int)(nr_of_sections));
+  if(read_nr_sections == 1){
     if (nr_of_sections < 7 || nr_of_sections > 16){
         printf("ERROR\nwrong sect_nr\n");
         close(fd);
         return -1;
     }
+  }
     if(read_nr_sections < 1){
         printf("SUCCESS\n");
         close(fd);
         return -1;
     }
 
-    for(char i = 0; i < nr_of_sections; i++){
+    for(int  i = 0; i < nr_of_sections; i++){
         read(fd, sect_name, 18);
-        sect_name[19] = '\0';
-        read(fd, sect_type, 2);
-        if(atoi(sect_type) != 76 && atoi(sect_type) != 28 && atoi(sect_type) != 29 && atoi(sect_type) != 87 && atoi(sect_type) != 38){
+        sect_name[18] = '\0';
+        read(fd, &sect_type, 2);
+        if(sect_type != 76 && sect_type != 28 && sect_type != 29 && sect_type != 87 && sect_type != 38){
             printf("ERROR\nwrong sect_types\n");
+            close(fd);
+            return -1;
         }
 
-        sect_type[3] = '\0';
-        read(fd, sect_offset, 4);
-        sect_offset[5] = '\0';
-
+        read(fd, &sect_offset, 4);
         read(fd, &sect_size, 4);
     }
-   }
+   
+   read(fd, &header_size,2);
+   read(fd,magic, 2);
+   lseek(fd, -header_size, SEEK_CUR);
+   lseek(fd, 5,SEEK_CUR);
 
+    printf("SUCCESS\n");
+    printf("version=%d\n", version);
+    printf("nr_sections=%d\n", (int)(nr_of_sections));
+
+    for (int i = 0; i < nr_of_sections; i++){
+        read(fd, sect_name, 18);
+        sect_name[18] = '\0';
+        read(fd, &sect_type, 2);
+        read(fd, &sect_offset, 4);
+        read(fd, &sect_size, 4);
+        printf("section%d: %s %d %d\n", i+1, sect_name, sect_type, sect_size);
+    }
 
    close(fd);
    return 0;
