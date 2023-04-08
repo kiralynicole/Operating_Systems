@@ -192,14 +192,15 @@ int list(const char *path, bool permission, int size)
         return -1;
      }
 
-     char line[100];
+     
      int k=0;
 
     lseek(fd, (18+2+4+4)*(sect_nr-1)+20, SEEK_CUR);
 
     read(fd, &sect_offset,4);
     read(fd, &sect_size, 4);
-        char *aux = (char*) malloc(sect_size +1 * sizeof(char));
+    char line[sect_size];
+        char *aux = (char*) malloc((sect_size +1)* sizeof(char));
 
 
      lseek(fd,sect_offset,SEEK_SET);
