@@ -94,11 +94,11 @@ int list(const char *path, bool permission, int size)
 
  int parse(int fd){
     char magic[3];
-    int header_size = 0;
+    unsigned short header_size = 0;
     int version;
     char nr_of_sections;
     char sect_name[19];
-    int sect_type;
+    unsigned short sect_type;
     int sect_offset;
     int sect_size;
 
@@ -138,12 +138,7 @@ int list(const char *path, bool permission, int size)
         return -1;
     }
   }
-    if(read_nr_sections < 1){
-        printf("SUCCESS\n");
-        close(fd);
-        return -1;
-    }
-
+    
     for(int  i = 0; i < nr_of_sections; i++){
         read(fd, sect_name, 18);
         sect_name[18] = '\0';
@@ -180,7 +175,63 @@ int list(const char *path, bool permission, int size)
    return 0;
     
  }
- 
+
+ int extract(int fd, int sect_nr, int line_nr){
+      char nr_of_sections;
+      unsigned short header_size;
+      int sect_offset;
+      int sect_size;
+      lseek(fd,-4, SEEK_END);
+     read(fd, &header_size, 2); 
+     lseek(fd, -header_size+4, SEEK_END);
+     read(fd, &nr_of_sections, 1);
+
+     if(nr_of_sections < sect_nr){
+        printf("ERROR\ninvalid section\n");
+        close(fd);
+        return -1;
+     }
+
+     char line[100];
+     int k=0;
+
+    lseek(fd, (18+2+4+4)*(sect_nr-1)+20, SEEK_CUR);
+
+    read(fd, &sect_offset,4);
+    read(fd, &sect_size, 4);
+        char *aux = (char*) malloc(sect_size +1 * sizeof(char));
+
+
+     lseek(fd,sect_offset,SEEK_SET);
+         read(fd, aux,sect_size);
+
+
+    int count = 1;
+
+    for(int j = 0; j <=sect_size; j++){
+
+                if(aux[j] == 0x0A){
+                    count++;
+                }
+            
+                if(count == line_nr){
+                    line[k++] = aux[j];
+                }
+            }
+    line[k] = '\0';
+    printf("SUCCESS\n");
+
+    for(int i = strlen(line)-1;i>=0; i--){
+        printf("%c", line[i]);
+    }
+
+free(aux);
+
+      close(fd);
+      return 0;    
+     
+     }
+
 
 
 int main(int argc, char **argv){
@@ -222,15 +273,15 @@ int main(int argc, char **argv){
         }
 
         else if(strcmp(argv[1], "parse") == 0){
-            char* filepath = NULL;
+            char* path = NULL;
             if(strncmp(argv[2], "path=", 5) == 0)
-           filepath = argv[2] + 5;
+           path = argv[2] + 5;
            else{
             printf("ERROR\nfile_path not specified");
            }
            
            int fd = -1;
-           fd = open(filepath, O_RDONLY);
+           fd = open(path, O_RDONLY);
           if(fd == -1) {
              printf("ERROR\ninvalid file_path");
              return 1;
@@ -238,6 +289,48 @@ int main(int argc, char **argv){
 
             parse(fd);
         }
+
+        else if(strcmp(argv[1] , "extract") == 0){
+            int j = 2, sect_nr = -1, line_nr =-1;
+            char* path = NULL;
+
+            while(j < argc){
+            if(strncmp(argv[j], "path=",5)==0){
+                path = argv[j] + 5;
+            }
+            else if(strncmp(argv[j], "section=", 8)==0){
+                sect_nr = atoi(argv[j] + 8);
+            }
+            else if(strncmp(argv[j],"line=", 5)==0){
+                line_nr = atoi(argv[j]+5);
+            }
+              j++;
+            }
+           // printf("path= %s %d %d", path, sect_nr, line_nr);
+            
+                int fd = -1;
+                
+                fd = open(path, O_RDONLY);
+
+                if(fd == -1){
+                    printf("ERROR\ninvalid file\n");
+                    close(fd);
+                    return -1;
+                }
+                extract(fd,sect_nr,line_nr);
+        }
+    //     else if(strcmp(argv[1], "findall") == 0){
+    //         char* path = NULL;
+    //         if(strncmp(argv[2], "path=",5) == 0){
+    //             path = argv[2] + 5;
+    //         }else{
+    //             printf("ERROR\ninvalid directory path\n");
+    //         }
+            
+
+
+    //        findall(path);
+    //    }
 
     }
     return 0;
