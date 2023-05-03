@@ -24,7 +24,13 @@ sem_t* logSem2;
 void* thread_func_sync(void* arg){
     TH_STRUCT*threads = (TH_STRUCT *)arg;
 
-    if(threads->nb_th == 1 || threads->nb_th == 2 || threads->nb_th == 4){
+    if(threads->nb_th == 1){
+        sem_wait(threads->logSem1);
+    }
+     if( threads->nb_th == 2 ){
+        sem_wait(threads->logSem1);
+    }
+     if( threads->nb_th == 4){
         sem_wait(threads->logSem1);
     }
 
@@ -184,9 +190,8 @@ void process_hierarchy(){
             }else if(pid7 == 0){
             info(BEGIN, 7,0);
 
-            sem_init(&logSem1, 0, 1); //to ensure that T73 starts before T72 and finishes after it
-            sem_init(&logSem2, 0, 0); //to ensure that T71 starts and finishes before T72 
-
+            sem_init(&logSem1, 0, 0); 
+            sem_init(&logSem2, 0, 0); 
 
             for(int i=0; i < NR_THREADS1; i++){
                 params[i].nb_prc = 7;
