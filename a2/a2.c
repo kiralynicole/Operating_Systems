@@ -45,6 +45,7 @@ void* thread_func_sync(void* arg){
     }
      if( threads->nb_th == 4){
         sem_wait(threads->logSem1);
+        sem_wait(sem1);
     }
 
     info(BEGIN, threads->nb_prc, threads->nb_th);
@@ -62,6 +63,11 @@ void* thread_func_sync(void* arg){
     if(threads->nb_th == 2){
         sem_post(threads->logSem2);
     }
+
+    if(threads->nb_th == 4){
+        sem_post(sem2);
+    }
+
 
 return NULL;
 }
@@ -85,9 +91,17 @@ return NULL;
 void* thread_func3(void* arg){
     TH_STRUCT3*threads = (TH_STRUCT3 *)arg;
 
+    if(threads->nb_th == 2){
+        sem_wait(sem2);
+    }
+
     info(BEGIN, threads->nb_prc, threads->nb_th);
 
     info(END, threads->nb_prc, threads->nb_th);
+
+    if(threads->nb_th == 1){
+        sem_post(sem1);
+    }
 
 
 return NULL;
@@ -273,15 +287,16 @@ void process_hierarchy(){
 int main(){
     init();
 
-//     sem1 = sem_open("semaphore1", O_CREAT, 0644, 1);
-// if(sem1 == NULL) {
-//      perror("Could not aquire the semaphore");
-//  }
+    sem1 = sem_open("semaphore1", O_CREAT, 0644, 1);
+if(sem1 == NULL) {
+     perror("Could not aquire the semaphore");
+ }
 
-// sem2 = sem_open("semaphore2", O_CREAT, 0644, 1);
-// if(sem2 == NULL) {
-//      perror("Could not aquire the semaphore");
-//  }
+sem2 = sem_open("semaphore2", O_CREAT, 0644, 1);
+if(sem2 == NULL) {
+     perror("Could not aquire the semaphore");
+ }
+
     info(BEGIN, 1, 0);
 
     process_hierarchy();
