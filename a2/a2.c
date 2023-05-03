@@ -2,11 +2,16 @@
 #include <unistd.h>
 #include<stdlib.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <fcntl.h>
 #include "a2_helper.h"
-#define NR_THREADS 4
+#define NR_THREADS1 4
+#define NR_THREADS2 46
+#define NR_THREADS3 4
+sem_t*sem1 = NULL,*sem2 = NULL;
 
 
 typedef struct {
@@ -19,20 +24,53 @@ sem_t* logSem2;
 void* thread_func_sync(void* arg){
     TH_STRUCT*threads = (TH_STRUCT *)arg;
 
+    if(threads->nb_th == 1 || threads->nb_th == 2 || threads->nb_th == 4){
+        sem_wait(threads->logSem1);
+    }
+
     info(BEGIN, threads->nb_prc, threads->nb_th);
 
+    if(threads->nb_th == 3){
+        sem_post(threads->logSem1);
+        sem_post(threads->logSem1);
+        sem_post(threads->logSem1);
+        sem_wait(threads->logSem2);
+    }
+
+
     info(END, threads->nb_prc, threads->nb_th);
+
+    if(threads->nb_th == 2){
+        sem_post(threads->logSem2);
+    }
 
 
 
 return NULL;
 }
 
+// void* thread_func_bar(void* arg){
+//     TH_STRUCT*threads = (TH_STRUCT *)arg;
+
+// sem_wait(threads->logSem1);
+
+//     info(BEGIN, threads->nb_prc, threads->nb_th);
+
+//     info(END, threads->nb_prc, threads->nb_th);
+
+// sem_post(threads->logSem1);
+
+
+// return NULL;
+// }
+
 
 
 void process_hierarchy(){
-    pthread_t tid[NR_THREADS];
-    TH_STRUCT params[NR_THREADS];
+    pthread_t tid[NR_THREADS1];
+    TH_STRUCT params[NR_THREADS1];
+    // pthread_t tid2[NR_THREADS2];
+    //TH_STRUCT params2[NR_THREADS2];
     sem_t logSem1, logSem2;
     pid_t pid2 = -1, pid3 = -1, pid4 = -1, pid5 = -1, pid6 = -1, pid7 = -1, pid8 = -1, pid9 = -1;
     int status2 = 0, status3 = 0, status4 = 0, status5 = 0, status6 = 0, status7 = 0, status8 = 0,status9 = 0;
@@ -72,6 +110,23 @@ void process_hierarchy(){
         exit(-1);
         }else if (pid5 == 0){
         info(BEGIN, 5, 0);
+        // sem_t logSem_5;
+        // sem_init(&logSem_5, 0, 4);
+
+        //  for(int i=0; i < NR_THREADS2; i++){
+        //         params[i].nb_prc = 5;
+        //         params[i].nb_th = i+1;
+        //         params[i].logSem1 = &logSem_5;
+        //         pthread_create(&tid2[i], NULL, thread_func_bar, &params2[i]);
+        //     }
+
+        //     for(int i = 0; i < NR_THREADS2; i++){
+        //         pthread_join(tid2[i], NULL);
+        //     }
+
+        //     sem_destroy(&logSem_5);
+
+
         info(END, 5,0);
         exit(5);
         }else{
@@ -129,11 +184,11 @@ void process_hierarchy(){
             }else if(pid7 == 0){
             info(BEGIN, 7,0);
 
-            sem_init(&logSem1, 0, 0);
-            sem_init(&logSem2, 0, 0); 
+            sem_init(&logSem1, 0, 1); //to ensure that T73 starts before T72 and finishes after it
+            sem_init(&logSem2, 0, 0); //to ensure that T71 starts and finishes before T72 
 
 
-            for(int i=0; i < NR_THREADS; i++){
+            for(int i=0; i < NR_THREADS1; i++){
                 params[i].nb_prc = 7;
                 params[i].nb_th = i+1;
                 params[i].logSem1 = &logSem1;
@@ -141,9 +196,12 @@ void process_hierarchy(){
                 pthread_create(&tid[i], NULL, thread_func_sync, &params[i]);
             }
 
-            for(int i = 0; i < NR_THREADS; i++){
+            for(int i = 0; i < NR_THREADS1; i++){
                 pthread_join(tid[i], NULL);
             }
+
+            sem_destroy(&logSem1);
+            sem_destroy(&logSem2);
 
             info(END, 7, 0);
             exit(7);
@@ -166,10 +224,23 @@ void process_hierarchy(){
 int main(){
     init();
 
+    sem1 = sem_open("semaphore1", O_CREAT, 0644, 1);
+if(sem1 == NULL) {
+     perror("Could not aquire the semaphore");
+ }
+
+sem2 = sem_open("semaphore2", O_CREAT, 0644, 1);
+if(sem2 == NULL) {
+     perror("Could not aquire the semaphore");
+ }
     info(BEGIN, 1, 0);
 
     process_hierarchy();
     
     info(END, 1, 0);
+
+    sem_close(sem1);
+    sem_close(sem2);
+
     return 0;
 }
