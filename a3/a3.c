@@ -18,8 +18,11 @@ int main(int argc, char** argv){
     char request[4] = {0x50, 0x49, 0x4E, 0x47};
     char request2[4] = {0x50, 0x4f, 0x4e, 0x47};
     unsigned int variant = 64529;
-   // char success[] = {0x07, 0x53, 0x55, 0x43, 0x43,  0x45, 0x53,  0x53};
-    //char err[] = {0x05, 0x45,  0x52,  0x52, 0x4f, 0x52};
+    
+    char succ[] = { 0x53, 0x55, 0x43, 0x43,  0x45, 0x53,  0x53};
+    char err[] = { 0x45,  0x52,  0x52, 0x4f, 0x52};
+    unsigned char err_size = 5;
+    unsigned char succ_size = 7;
 
 
     if(mkfifo(FIFO1, 0600) != 0){
@@ -52,7 +55,7 @@ int main(int argc, char** argv){
 
         if(read(fd2, &received_size, sizeof(unsigned char)) == 1){
          
-            char received[4];
+            char received[received_size];
             
             read(fd2, received, received_size);
            // received[received_size] = '\0';
@@ -70,10 +73,44 @@ int main(int argc, char** argv){
                 write(fd1, request2, sizeof(request2));
             }
 
+            if(strncmp(received, "CREATE_SHM", 10)){
+                unsigned int size_shm;
+                read(fd2, &size_shm, sizeof(unsigned int));
+                int fd3 = shm_open("/51xp1coC", O_CREAT | O_RDWR, 0644);
+                if(fd3 < 0) {
+                    write(fd1, &received_size, sizeof(unsigned char));
+                    write(fd1, received, sizeof(received));
+                     write(fd1, &err_size, sizeof(unsigned char));
+                     write (fd1, err, sizeof(err));
+                    
+                }
 
-           
+                ftruncate(fd3, size_shm);
+                volatile unsigned char *sharedChar = (volatile unsigned char*)mmap(NULL, sizeof(size_shm), PROT_READ | PROT_WRITE, MAP_SHARED, fd3, 0);
+                 if(sharedChar != (void*)-1){
+                     write(fd1, &received_size, sizeof(unsigned char));
+                    write(fd1, received, sizeof(received));
+                     write(fd1, &succ_size, sizeof(unsigned char));
+                     write (fd1, succ, sizeof(succ));
+                    
+                 }else{
+                     write(fd1, &received_size, sizeof(unsigned char));
+                    write(fd1, received, sizeof(received));
+                     write(fd1, &err_size, sizeof(unsigned char));
+                     write (fd1, err, sizeof(err));
+                    
+                 }
+
+            }
         }
+
+        // }
+
+
+
      //  }
+
+
 
         
         
@@ -81,6 +118,7 @@ int main(int argc, char** argv){
 close(fd1);
 close(fd2);
 unlink(FIFO1);
+unlink(FIFO2);
 
 return 0;
 
