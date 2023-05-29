@@ -1,0 +1,114 @@
+[1;35mTesting ping...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'PING'
+[TESTER] received string 'PING'
+[TESTER] received number 64529
+[TESTER] received string 'PONG'
+[TESTER] sending string 'EXIT'
+Test score: 10 / 10
+[1;35mTesting shm1...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'CREATE_SHM'
+[TESTER] sending number 5201924
+[TESTER] sending string 'EXIT'
+Test score: 1 / 10
+[1;35mTesting shm_write...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'CREATE_SHM'
+[TESTER] sending number 5201924
+[TESTER] sending string 'EXIT'
+Test score: 1 / 10
+[1;35mTesting map_inexistent...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'MAP_FILE'
+[TESTER] sending string 'test_root/JAd8nc1NzA7n.5bV'
+[TESTER] received string 'MAP_FILE'
+[TESTER] received string 'SUCCESS'
+[TESTER] sending string 'EXIT'
+Test score: 1 / 5
+[1;35mTesting map1...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'MAP_FILE'
+[TESTER] sending string 'test_root/H0wVfnpGdF.0Ze'
+[TESTER] received string 'MAP_FILE'
+[TESTER] received string 'SUCCESS'
+[TESTER] sending string 'EXIT'
+Test score: 5 / 5
+[1;35mTesting read_offset...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'CREATE_SHM'
+[TESTER] sending number 5201924
+[TESTER] sending string 'EXIT'
+Test score: 1 / 10
+[1;35mTesting read_section...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'CREATE_SHM'
+[TESTER] sending number 5201924
+[TESTER] sending string 'EXIT'
+Test score: 1 / 10
+[1;35mTesting read_logical...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'CREATE_SHM'
+[TESTER] sending number 5201924
+[TESTER] sending string 'EXIT'
+Test score: 1 / 10
+
+Total score: 21 / 70
+Assignment grade: 30.00 / 100
+[1;35mTesting ping...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'PING'
+[TESTER] received string 'PING'
+[TESTER] received number 64529
+[TESTER] received string 'PONG'
+[TESTER] sending string 'EXIT'
+Test score: 10 / 10
+[1;35mTesting shm1...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'CREATE_SHM'
+[TESTER] sending number 5201924
+[TESTER] sending string 'EXIT'
+Test score: 1 / 10
+[1;35mTesting shm_write...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'CREATE_SHM'
+[TESTER] sending number 5201924
+[TESTER] sending string 'EXIT'
+Test score: 1 / 10
+[1;35mTesting map_inexistent...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'MAP_FILE'
+[TESTER] sending string 'test_root/JAd8nc1NzA7n.5bV'
+[TESTER] received string 'MAP_FILE'
+[TESTER] received string 'SUCCESS'
+[TESTER] sending string 'EXIT'
+Test score: 1 / 5
+[1;35mTesting map1...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'MAP_FILE'
+[TESTER] sending string 'test_root/H0wVfnpGdF.0Ze'
+[TESTER] received string 'MAP_FILE'
+[TESTER] received string 'SUCCESS'
+[TESTER] sending string 'EXIT'
+Test score: 5 / 5
+[1;35mTesting read_offset...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'CREATE_SHM'
+[TESTER] sending number 5201924
+[TESTER] sending string 'EXIT'
+Test score: 1 / 10
+[1;35mTesting read_section...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'CREATE_SHM'
+[TESTER] sending number 5201924
+[TESTER] sending string 'EXIT'
+Test score: 1 / 10
+[1;35mTesting read_logical...[0m
+[TESTER] received string 'CONNECT'
+[TESTER] sending string 'CREATE_SHM'
+[TESTER] sending number 5201924
+[TESTER] sending string 'EXIT'
+Test score: 1 / 10
+
+Total score: 21 / 70
+Assignment grade: 30.00 / 100
